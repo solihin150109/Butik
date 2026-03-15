@@ -10,6 +10,76 @@ export default function ProductDetail() {
   const [activeImage, setActiveImage] = useState(0);
   const [quantity, setQuantity] = useState(1);
 
+  const [shippingOrigin, setShippingOrigin] = useState('Jakarta');
+  const [shippingDestination, setShippingDestination] = useState('');
+  const [shippingResults, setShippingResults] = useState<any[] | null>(null);
+  const [isCalculating, setIsCalculating] = useState(false);
+
+  const calculateShipping = () => {
+    if (!shippingDestination) {
+      alert('Please enter a destination');
+      return;
+    }
+
+    setIsCalculating(true);
+    setShippingResults(null);
+
+    // Mock calculation delay
+    setTimeout(() => {
+      const baseRates: any = {
+        'Jakarta': {
+          'Jakarta': [
+            { courier: 'JNE Reg', price: 10000, etd: '1-2 Days' },
+            { courier: 'Sicepat Reg', price: 9000, etd: '1-2 Days' },
+            { courier: 'J&T Express', price: 10000, etd: '1-2 Days' }
+          ],
+          'Surabaya': [
+            { courier: 'JNE Reg', price: 25000, etd: '2-3 Days' },
+            { courier: 'Sicepat Reg', price: 22000, etd: '2-3 Days' },
+            { courier: 'J&T Express', price: 24000, etd: '2-3 Days' }
+          ],
+          'Jayapura': [
+            { courier: 'JNE Reg', price: 120000, etd: '5-7 Days' },
+            { courier: 'Sicepat Reg', price: 115000, etd: '5-7 Days' },
+            { courier: 'J&T Express', price: 118000, etd: '5-7 Days' }
+          ],
+          'default': [
+            { courier: 'JNE Reg', price: 35000, etd: '3-5 Days' },
+            { courier: 'Sicepat Reg', price: 32000, etd: '3-5 Days' },
+            { courier: 'J&T Express', price: 34000, etd: '3-5 Days' }
+          ]
+        },
+        'Papua': {
+          'Jayapura': [
+            { courier: 'JNE Reg', price: 15000, etd: '1-2 Days' },
+            { courier: 'Sicepat Reg', price: 14000, etd: '1-2 Days' },
+            { courier: 'J&T Express', price: 15000, etd: '1-2 Days' }
+          ],
+          'Jakarta': [
+            { courier: 'JNE Reg', price: 110000, etd: '5-7 Days' },
+            { courier: 'Sicepat Reg', price: 105000, etd: '5-7 Days' },
+            { courier: 'J&T Express', price: 108000, etd: '5-7 Days' }
+          ],
+          'default': [
+            { courier: 'JNE Reg', price: 85000, etd: '4-6 Days' },
+            { courier: 'Sicepat Reg', price: 82000, etd: '4-6 Days' },
+            { courier: 'J&T Express', price: 84000, etd: '4-6 Days' }
+          ]
+        }
+      };
+
+      const dest = shippingDestination.toLowerCase();
+      let rates = baseRates[shippingOrigin]['default'];
+
+      if (dest.includes('jakarta')) rates = baseRates[shippingOrigin]['Jakarta'] || rates;
+      if (dest.includes('surabaya')) rates = baseRates[shippingOrigin]['Surabaya'] || rates;
+      if (dest.includes('jayapura')) rates = baseRates[shippingOrigin]['Jayapura'] || rates;
+
+      setShippingResults(rates);
+      setIsCalculating(false);
+    }, 800);
+  };
+
   if (!product) return <div className="pt-40 text-center font-serif text-2xl">Product not found.</div>;
 
   const whatsappMessage = `Hello Earth & Stone! I'm interested in the ${product.name} (Rp ${product.price.toLocaleString()}). Is it still available?`;
@@ -100,25 +170,62 @@ export default function ProductDetail() {
             </div>
           </div>
 
-          {/* Shipping Estimator UI Placeholder */}
+          {/* Shipping Estimator */}
           <div className="border-t border-sand/10 pt-8 mb-10">
             <h3 className="text-xs uppercase tracking-widest font-bold text-coffee mb-4 flex items-center gap-2">
               <Truck size={14} />
               Shipping Estimator
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <select className="bg-white border border-sand/20 px-4 py-2 text-sm focus:outline-none focus:border-coffee">
-                <option>Select Destination</option>
-                <option>Jakarta</option>
-                <option>Surabaya</option>
-                <option>Jayapura</option>
-              </select>
-              <select className="bg-white border border-sand/20 px-4 py-2 text-sm focus:outline-none focus:border-coffee">
-                <option>Select Courier</option>
-                <option>JNE</option>
-                <option>Sicepat</option>
-                <option>J&T</option>
-              </select>
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest text-earth-dark/40 font-bold ml-1">Ship From</label>
+                  <select 
+                    value={shippingOrigin}
+                    onChange={(e) => setShippingOrigin(e.target.value)}
+                    className="w-full bg-white border border-sand/20 px-4 py-3 text-sm focus:outline-none focus:border-coffee rounded-lg"
+                  >
+                    <option value="Jakarta">Jakarta Warehouse</option>
+                    <option value="Papua">Papua Warehouse</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-widest text-earth-dark/40 font-bold ml-1">Destination</label>
+                  <input 
+                    type="text"
+                    placeholder="Enter city (e.g. Jakarta, Surabaya)"
+                    value={shippingDestination}
+                    onChange={(e) => setShippingDestination(e.target.value)}
+                    className="w-full bg-white border border-sand/20 px-4 py-3 text-sm focus:outline-none focus:border-coffee rounded-lg"
+                  />
+                </div>
+              </div>
+              
+              <button 
+                onClick={calculateShipping}
+                disabled={isCalculating}
+                className="w-full py-3 bg-sand/10 text-coffee text-[10px] uppercase tracking-[0.2em] font-bold hover:bg-sand/20 transition-colors rounded-lg disabled:opacity-50"
+              >
+                {isCalculating ? 'Calculating...' : 'Check Rates'}
+              </button>
+
+              {shippingResults && (
+                <motion.div 
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="space-y-2 mt-4"
+                >
+                  {shippingResults.map((rate, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-100">
+                      <div>
+                        <p className="text-xs font-bold text-earth-dark">{rate.courier}</p>
+                        <p className="text-[10px] text-earth-dark/40 uppercase tracking-widest">Est. {rate.etd}</p>
+                      </div>
+                      <p className="text-sm font-bold text-coffee">Rp {rate.price.toLocaleString('id-ID')}</p>
+                    </div>
+                  ))}
+                </motion.div>
+              )}
             </div>
           </div>
 
