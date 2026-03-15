@@ -21,6 +21,8 @@ import Contact from './pages/Contact';
 import AdminDashboard from './pages/AdminDashboard';
 import AdminProducts from './pages/AdminProducts';
 import AdminJournal from './pages/AdminJournal';
+import AdminJournalEditor from './pages/AdminJournalEditor';
+import Login from './pages/Login';
 
 // Layouts
 const PublicLayout = () => (
@@ -55,6 +57,7 @@ export default function App() {
           <Route path="/journal/:id" element={<JournalDetail />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
+          <Route path="/login" element={<Login />} />
         </Route>
 
         {/* Admin Routes */}
@@ -62,6 +65,8 @@ export default function App() {
           <Route path="dashboard" element={<AdminDashboard />} />
           <Route path="products" element={<AdminProducts />} />
           <Route path="journal" element={<AdminJournal />} />
+          <Route path="journal/new" element={<AdminJournalEditor />} />
+          <Route path="journal/edit/:id" element={<AdminJournalEditor />} />
         </Route>
       </Routes>
     </Router>

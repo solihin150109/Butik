@@ -1,15 +1,27 @@
 import { useState } from 'react';
 import { PRODUCTS } from '../constants/data';
-import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon } from 'lucide-react';
+import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, AlertTriangle } from 'lucide-react';
 
 export default function AdminProducts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
+  const [editingProduct, setEditingProduct] = useState<any>(null);
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const filteredProducts = PRODUCTS.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.category.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleEdit = (product: any) => {
+    setEditingProduct(product);
+    setIsModalOpen(true);
+  };
+
+  const handleAddNew = () => {
+    setEditingProduct(null);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
@@ -19,7 +31,7 @@ export default function AdminProducts() {
           <p className="text-sm text-earth-dark/50">Manage your boutique inventory and stock levels.</p>
         </div>
         <button 
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleAddNew}
           className="bg-earth-dark text-cream px-6 py-3 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-coffee transition-colors shadow-lg"
         >
           <Plus size={18} />
@@ -75,10 +87,16 @@ export default function AdminProducts() {
                 </td>
                 <td className="px-6 py-4 text-right">
                   <div className="flex justify-end space-x-2">
-                    <button className="p-2 text-gray-400 hover:text-coffee hover:bg-coffee/5 rounded-lg transition-colors">
+                    <button 
+                      onClick={() => handleEdit(product)}
+                      className="p-2 text-gray-400 hover:text-coffee hover:bg-coffee/5 rounded-lg transition-colors"
+                    >
                       <Edit2 size={18} />
                     </button>
-                    <button className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors">
+                    <button 
+                      onClick={() => setDeleteConfirmId(product.id)}
+                      className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                    >
                       <Trash2 size={18} />
                     </button>
                   </div>
@@ -95,7 +113,9 @@ export default function AdminProducts() {
           <div className="absolute inset-0 bg-earth-dark/40 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
           <div className="relative bg-white w-full max-w-2xl rounded-3xl shadow-2xl overflow-hidden">
             <div className="px-8 py-6 border-b border-gray-100 flex justify-between items-center">
-              <h2 className="text-2xl font-serif text-earth-dark">Add New Product</h2>
+              <h2 className="text-2xl font-serif text-earth-dark">
+                {editingProduct ? 'Edit Product' : 'Add New Product'}
+              </h2>
               <button onClick={() => setIsModalOpen(false)} className="text-gray-400 hover:text-earth-dark"><X size={24} /></button>
             </div>
             
@@ -103,11 +123,19 @@ export default function AdminProducts() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Product Name</label>
-                  <input type="text" className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" placeholder="e.g. Terra Cotta Vase" />
+                  <input 
+                    type="text" 
+                    defaultValue={editingProduct?.name || ''}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
+                    placeholder="e.g. Terra Cotta Vase" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Category</label>
-                  <select className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee">
+                  <select 
+                    defaultValue={editingProduct?.category || 'Home Decor'}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee"
+                  >
                     <option>Home Decor</option>
                     <option>Apparel</option>
                     <option>Furniture</option>
@@ -119,11 +147,19 @@ export default function AdminProducts() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Price (IDR)</label>
-                  <input type="number" className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" placeholder="1250000" />
+                  <input 
+                    type="number" 
+                    defaultValue={editingProduct?.price || ''}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
+                    placeholder="1250000" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Origin</label>
-                  <select className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee">
+                  <select 
+                    defaultValue={editingProduct?.origin || 'Both'}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee"
+                  >
                     <option>Jakarta</option>
                     <option>Papua</option>
                     <option>Both</option>
@@ -134,17 +170,32 @@ export default function AdminProducts() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Jakarta Stock</label>
-                  <input type="number" className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" placeholder="0" />
+                  <input 
+                    type="number" 
+                    defaultValue={editingProduct?.stock?.jakarta || 0}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
+                    placeholder="0" 
+                  />
                 </div>
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Papua Stock</label>
-                  <input type="number" className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" placeholder="0" />
+                  <input 
+                    type="number" 
+                    defaultValue={editingProduct?.stock?.papua || 0}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
+                    placeholder="0" 
+                  />
                 </div>
               </div>
 
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Description</label>
-                <textarea rows={4} className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" placeholder="Describe the product..."></textarea>
+                <textarea 
+                  rows={4} 
+                  defaultValue={editingProduct?.description || ''}
+                  className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
+                  placeholder="Describe the product..."
+                ></textarea>
               </div>
 
               <div className="space-y-2">
@@ -165,6 +216,40 @@ export default function AdminProducts() {
               </button>
               <button className="bg-earth-dark text-cream px-8 py-3 rounded-xl text-sm font-bold hover:bg-coffee transition-colors shadow-lg">
                 Save Product
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center p-6">
+          <div className="absolute inset-0 bg-earth-dark/40 backdrop-blur-sm" onClick={() => setDeleteConfirmId(null)} />
+          <div className="relative bg-white w-full max-w-sm rounded-3xl shadow-2xl p-8 text-center">
+            <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-6">
+              <AlertTriangle size={32} />
+            </div>
+            <h2 className="text-2xl font-serif text-earth-dark mb-2">Delete Product?</h2>
+            <p className="text-sm text-earth-dark/50 mb-8 leading-relaxed">
+              Are you sure you want to remove this item from inventory? This action cannot be undone.
+            </p>
+            <div className="flex gap-4">
+              <button 
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 px-6 py-3 rounded-xl text-sm font-bold text-earth-dark/60 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={() => {
+                  // In a real app, perform delete
+                  setDeleteConfirmId(null);
+                  alert('Product deleted successfully');
+                }}
+                className="flex-1 px-6 py-3 rounded-xl text-sm font-bold bg-red-500 text-white hover:bg-red-600 transition-colors shadow-lg shadow-red-200"
+              >
+                Delete
               </button>
             </div>
           </div>
