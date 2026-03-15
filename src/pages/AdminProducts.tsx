@@ -1,12 +1,30 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { PRODUCTS } from '../constants/data';
 import { Plus, Search, Edit2, Trash2, X, Image as ImageIcon, AlertTriangle } from 'lucide-react';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export default function AdminProducts() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+
+  // Form State
+  const [formData, setFormData] = useState({
+    name: '',
+    category: 'Home Decor',
+    price: '',
+    origin: 'Both',
+    stockJakarta: 0,
+    stockPapua: 0,
+    description: '',
+    images: [] as string[]
+  });
 
   const filteredProducts = PRODUCTS.filter(p => 
     p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -15,12 +33,41 @@ export default function AdminProducts() {
 
   const handleEdit = (product: any) => {
     setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      category: product.category,
+      price: product.price.toString(),
+      origin: product.origin || 'Both',
+      stockJakarta: product.stock.jakarta,
+      stockPapua: product.stock.papua,
+      description: product.description,
+      images: product.images
+    });
     setIsModalOpen(true);
   };
 
   const handleAddNew = () => {
     setEditingProduct(null);
+    setFormData({
+      name: '',
+      category: 'Home Decor',
+      price: '',
+      origin: 'Both',
+      stockJakarta: 0,
+      stockPapua: 0,
+      description: '',
+      images: []
+    });
     setIsModalOpen(true);
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // In a real app, upload to storage. Here we use a local preview URL
+      const url = URL.createObjectURL(file);
+      setFormData(prev => ({ ...prev, images: [...prev.images, url] }));
+    }
   };
 
   return (
@@ -125,7 +172,8 @@ export default function AdminProducts() {
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Product Name</label>
                   <input 
                     type="text" 
-                    defaultValue={editingProduct?.name || ''}
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
                     placeholder="e.g. Terra Cotta Vase" 
                   />
@@ -133,7 +181,8 @@ export default function AdminProducts() {
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Category</label>
                   <select 
-                    defaultValue={editingProduct?.category || 'Home Decor'}
+                    value={formData.category}
+                    onChange={(e) => setFormData({...formData, category: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee"
                   >
                     <option>Home Decor</option>
@@ -149,7 +198,8 @@ export default function AdminProducts() {
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Price (IDR)</label>
                   <input 
                     type="number" 
-                    defaultValue={editingProduct?.price || ''}
+                    value={formData.price}
+                    onChange={(e) => setFormData({...formData, price: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
                     placeholder="1250000" 
                   />
@@ -157,32 +207,37 @@ export default function AdminProducts() {
                 <div className="space-y-2">
                   <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Origin</label>
                   <select 
-                    defaultValue={editingProduct?.origin || 'Both'}
+                    value={formData.origin}
+                    onChange={(e) => setFormData({...formData, origin: e.target.value})}
                     className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee"
                   >
-                    <option>Jakarta</option>
-                    <option>Papua</option>
-                    <option>Both</option>
+                    <option value="Jakarta">Jakarta</option>
+                    <option value="Papua">Papua</option>
+                    <option value="Both">Both</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Jakarta Stock</label>
+                  <label className={cn("text-[10px] uppercase tracking-widest font-bold text-gray-400", formData.origin === 'Papua' && "opacity-30")}>Jakarta Stock</label>
                   <input 
                     type="number" 
-                    defaultValue={editingProduct?.stock?.jakarta || 0}
-                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
+                    value={formData.stockJakarta}
+                    onChange={(e) => setFormData({...formData, stockJakarta: parseInt(e.target.value) || 0})}
+                    disabled={formData.origin === 'Papua'}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee disabled:opacity-30 disabled:cursor-not-allowed" 
                     placeholder="0" 
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Papua Stock</label>
+                  <label className={cn("text-[10px] uppercase tracking-widest font-bold text-gray-400", formData.origin === 'Jakarta' && "opacity-30")}>Papua Stock</label>
                   <input 
                     type="number" 
-                    defaultValue={editingProduct?.stock?.papua || 0}
-                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
+                    value={formData.stockPapua}
+                    onChange={(e) => setFormData({...formData, stockPapua: parseInt(e.target.value) || 0})}
+                    disabled={formData.origin === 'Jakarta'}
+                    className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee disabled:opacity-30 disabled:cursor-not-allowed" 
                     placeholder="0" 
                   />
                 </div>
@@ -192,7 +247,8 @@ export default function AdminProducts() {
                 <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Description</label>
                 <textarea 
                   rows={4} 
-                  defaultValue={editingProduct?.description || ''}
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
                   className="w-full bg-gray-50 border border-gray-100 px-4 py-3 rounded-xl text-sm focus:outline-none focus:border-coffee" 
                   placeholder="Describe the product..."
                 ></textarea>
@@ -200,9 +256,24 @@ export default function AdminProducts() {
 
               <div className="space-y-2">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Product Images</label>
-                <div className="border-2 border-dashed border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center text-gray-400 hover:border-sand hover:text-sand transition-all cursor-pointer">
-                  <ImageIcon size={32} className="mb-2" />
-                  <span className="text-xs font-bold uppercase tracking-widest">Upload Images</span>
+                <div className="grid grid-cols-4 gap-4 mb-4">
+                  {formData.images.map((img, idx) => (
+                    <div key={idx} className="relative aspect-square rounded-xl overflow-hidden bg-gray-100 group">
+                      <img src={img} alt="" className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, images: prev.images.filter((_, i) => i !== idx) }))}
+                        className="absolute top-1 right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      >
+                        <X size={12} />
+                      </button>
+                    </div>
+                  ))}
+                  <label className="aspect-square border-2 border-dashed border-gray-200 rounded-xl flex flex-col items-center justify-center text-gray-400 hover:border-sand hover:text-sand transition-all cursor-pointer">
+                    <ImageIcon size={24} className="mb-1" />
+                    <span className="text-[8px] font-bold uppercase tracking-widest">Add</span>
+                    <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+                  </label>
                 </div>
               </div>
             </form>

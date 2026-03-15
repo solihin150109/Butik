@@ -1,4 +1,4 @@
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { LayoutDashboard, Package, FileText, Settings, LogOut, Home } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
@@ -9,6 +9,12 @@ function cn(...inputs: ClassValue[]) {
 
 export default function AdminSidebar() {
   const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // In a real app, clear auth state
+    navigate('/');
+  };
 
   const menuItems = [
     { name: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
@@ -48,7 +54,10 @@ export default function AdminSidebar() {
           <Home size={20} />
           <span className="text-sm">View Shop</span>
         </Link>
-        <button className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center space-x-3 px-4 py-3 text-red-400 hover:bg-red-400/10 rounded-lg transition-colors"
+        >
           <LogOut size={20} />
           <span className="text-sm">Logout</span>
         </button>

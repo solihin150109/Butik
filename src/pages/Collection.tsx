@@ -3,21 +3,36 @@ import { motion } from 'motion/react';
 import { Filter, ChevronDown, X } from 'lucide-react';
 import { PRODUCTS } from '../constants/data';
 import ProductCard from '../components/ProductCard';
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
+
+function cn(...inputs: ClassValue[]) {
+  return twMerge(clsx(inputs));
+}
 
 export default function Collection() {
   const [filterOpen, setFilterOpen] = useState(false);
   const [category, setCategory] = useState('All');
   const [origin, setOrigin] = useState('All');
   const [priceRange, setPriceRange] = useState([0, 10000000]);
+  const [sortBy, setSortBy] = useState('Newest');
+  const [isSortOpen, setIsSortOpen] = useState(false);
 
   const categories = ['All', 'Home Decor', 'Apparel', 'Furniture', 'Kitchen', 'Lifestyle'];
   const origins = ['All', 'Jakarta', 'Papua', 'Both'];
+  const sortOptions = ['Newest', 'Price: Low to High', 'Price: High to Low', 'Name: A-Z'];
 
   const filteredProducts = PRODUCTS.filter(p => {
     const catMatch = category === 'All' || p.category === category;
     const originMatch = origin === 'All' || p.origin === origin || p.origin === 'Both';
     const priceMatch = p.price >= priceRange[0] && p.price <= priceRange[1];
     return catMatch && originMatch && priceMatch;
+  }).sort((a, b) => {
+    if (sortBy === 'Price: Low to High') return a.price - b.price;
+    if (sortBy === 'Price: High to Low') return b.price - a.price;
+    if (sortBy === 'Name: A-Z') return a.name.localeCompare(b.name);
+    // Default to newest (assuming ID or order in array represents age for mock data)
+    return 0;
   });
 
   return (
@@ -97,12 +112,35 @@ export default function Collection() {
         <div className="flex-1">
           <div className="flex justify-between items-center mb-8 hidden lg:flex">
             <span className="text-sm text-earth-dark/50 italic">Showing {filteredProducts.length} results</span>
-            <div className="flex items-center space-x-2 text-xs uppercase tracking-widest font-bold text-earth-dark/70">
+            <div className="flex items-center space-x-2 text-xs uppercase tracking-widest font-bold text-earth-dark/70 relative">
               <span>Sort By:</span>
-              <button className="flex items-center space-x-1 hover:text-coffee">
-                <span>Newest</span>
-                <ChevronDown size={14} />
+              <button 
+                onClick={() => setIsSortOpen(!isSortOpen)}
+                className="flex items-center space-x-1 hover:text-coffee transition-colors"
+              >
+                <span>{sortBy}</span>
+                <ChevronDown size={14} className={cn("transition-transform", isSortOpen && "rotate-180")} />
               </button>
+
+              {isSortOpen && (
+                <div className="absolute top-full right-0 mt-2 w-48 bg-white shadow-xl border border-sand/10 rounded-xl overflow-hidden z-50">
+                  {sortOptions.map(option => (
+                    <button
+                      key={option}
+                      onClick={() => {
+                        setSortBy(option);
+                        setIsSortOpen(false);
+                      }}
+                      className={cn(
+                        "w-full text-left px-4 py-3 text-[10px] uppercase tracking-widest transition-colors hover:bg-sand/5",
+                        sortBy === option ? "text-coffee font-bold" : "text-earth-dark/60"
+                      )}
+                    >
+                      {option}
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
 

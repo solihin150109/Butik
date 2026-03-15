@@ -35,6 +35,14 @@ export default function AdminJournalEditor() {
     }
   }, [id, isEdit]);
 
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setFormData(prev => ({ ...prev, image: url }));
+    }
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, save to DB
@@ -149,14 +157,15 @@ export default function AdminJournalEditor() {
 
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
             <h3 className="font-serif text-lg text-earth-dark border-b border-gray-50 pb-4">Cover Image</h3>
-            <div className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 group">
+            <label className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 group cursor-pointer block">
               <img src={formData.image} alt="Cover" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <button className="p-3 bg-white rounded-full text-earth-dark shadow-xl">
+                <div className="p-3 bg-white rounded-full text-earth-dark shadow-xl">
                   <ImageIcon size={20} />
-                </button>
+                </div>
               </div>
-            </div>
+              <input type="file" className="hidden" accept="image/*" onChange={handleImageUpload} />
+            </label>
             <p className="text-[10px] text-center text-gray-400 uppercase tracking-widest">Click to change image</p>
           </div>
         </div>
