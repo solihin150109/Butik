@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, Save, Image as ImageIcon, Eye, X } from 'lucide-react';
-import { JOURNAL_POSTS } from '../constants/data';
+import { ArrowLeft, Save, Image as ImageIcon, Eye, X, Loader2, AlertTriangle } from 'lucide-react';
 
 export default function AdminJournalEditor() {
   const { id } = useParams();
@@ -17,21 +16,63 @@ export default function AdminJournalEditor() {
     image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&q=80&w=1000'
   });
 
+  const [isLoading, setIsLoading] = useState(isEdit);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
 
   useEffect(() => {
     if (isEdit) {
-      const post = JOURNAL_POSTS.find(p => p.id === id);
-      if (post) {
-        setFormData({
-          title: post.title,
-          category: post.category,
-          date: post.date,
-          excerpt: post.excerpt,
-          content: '', // In a real app, we'd have the full content
-          image: post.image
-        });
-      }
+      const fetchPost = async () => {
+        setIsLoading(true);
+        setError(null);
+        try {
+          // Simulated API call
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          // Placeholder data retrieval logic
+          // In a real app, this would be a fetch(`/api/journal/${id}`)
+          const mockPosts = [
+            {
+              id: '1',
+              title: 'The Art of Stone Carving',
+              category: 'Craftsmanship',
+              date: 'Oct 12, 2023',
+              excerpt: 'Exploring the ancient techniques used by Papuan artisans to create timeless stone artifacts.',
+              image: 'https://picsum.photos/seed/stone/400/400',
+              content: 'Full content of the article would go here. This is a placeholder for the editorial story about stone carving in Papua.'
+            },
+            {
+              id: '2',
+              title: 'Sustainable Sourcing in Papua',
+              category: 'Ethics',
+              date: 'Oct 08, 2023',
+              excerpt: 'How we work with local communities to ensure our materials are sourced responsibly.',
+              image: 'https://picsum.photos/seed/papua/400/400',
+              content: 'Full content of the article would go here. This is a placeholder for the editorial story about sustainable sourcing.'
+            }
+          ];
+
+          const post = mockPosts.find(p => p.id === id);
+          if (post) {
+            setFormData({
+              title: post.title,
+              category: post.category,
+              date: post.date,
+              excerpt: post.excerpt,
+              content: post.content || '',
+              image: post.image
+            });
+          } else {
+            setError('Article not found');
+          }
+        } catch (err) {
+          setError('Failed to load article data');
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      fetchPost();
     }
   }, [id, isEdit]);
 
@@ -43,12 +84,29 @@ export default function AdminJournalEditor() {
     }
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In a real app, save to DB
-    alert('Article saved successfully!');
-    navigate('/admin/journal');
+    setIsSaving(true);
+    try {
+      // Simulated API call
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      alert('Article saved successfully!');
+      navigate('/admin/journal');
+    } catch (err) {
+      alert('Failed to save article');
+    } finally {
+      setIsSaving(false);
+    }
   };
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-10 h-10 text-coffee animate-spin" />
+        <p className="text-earth-dark/40 font-serif italic">Loading editor...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 max-w-5xl mx-auto">
@@ -61,7 +119,7 @@ export default function AdminJournalEditor() {
             <ArrowLeft size={20} />
           </button>
           <div>
-            <h1 className="text-3xl font-serif text-earth-dark">
+            <h1 className="text-3xl font-serif text-earth-dark italic">
               {isEdit ? 'Edit Article' : 'Write New Story'}
             </h1>
             <p className="text-sm text-earth-dark/50">Draft your editorial content for the boutique journal.</p>
@@ -78,13 +136,24 @@ export default function AdminJournalEditor() {
           </button>
           <button 
             onClick={handleSave}
-            className="bg-earth-dark text-cream px-6 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-coffee transition-colors shadow-lg"
+            disabled={isSaving}
+            className="bg-earth-dark text-cream px-6 py-2 rounded-xl text-sm font-bold flex items-center gap-2 hover:bg-coffee transition-colors shadow-lg disabled:opacity-50"
           >
-            <Save size={18} />
-            Save Article
+            {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />}
+            {isSaving ? 'Saving...' : 'Save Article'}
           </button>
         </div>
       </header>
+
+      {error && (
+        <div className="mb-8 p-6 bg-red-50 text-red-600 rounded-3xl flex items-center gap-4">
+          <AlertTriangle size={24} />
+          <div>
+            <p className="font-bold">Error</p>
+            <p className="text-sm">{error}</p>
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSave} className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
@@ -96,8 +165,9 @@ export default function AdminJournalEditor() {
                 type="text" 
                 value={formData.title}
                 onChange={(e) => setFormData({...formData, title: e.target.value})}
-                className="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl text-xl font-serif focus:outline-none focus:border-coffee"
+                className="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl text-xl font-serif focus:outline-none focus:border-coffee italic"
                 placeholder="Enter a captivating title..."
+                required
               />
             </div>
 
@@ -109,6 +179,7 @@ export default function AdminJournalEditor() {
                 onChange={(e) => setFormData({...formData, excerpt: e.target.value})}
                 className="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl text-sm focus:outline-none focus:border-coffee leading-relaxed"
                 placeholder="A brief summary for the list view..."
+                required
               />
             </div>
 
@@ -120,6 +191,7 @@ export default function AdminJournalEditor() {
                 onChange={(e) => setFormData({...formData, content: e.target.value})}
                 className="w-full bg-gray-50 border border-gray-100 px-6 py-4 rounded-2xl text-sm focus:outline-none focus:border-coffee leading-relaxed"
                 placeholder="Tell your story here..."
+                required
               />
             </div>
           </div>
@@ -128,7 +200,7 @@ export default function AdminJournalEditor() {
         {/* Sidebar Settings */}
         <div className="space-y-6">
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-            <h3 className="font-serif text-lg text-earth-dark border-b border-gray-50 pb-4">Settings</h3>
+            <h3 className="font-serif text-lg text-earth-dark border-b border-gray-50 pb-4 italic">Settings</h3>
             
             <div className="space-y-2">
               <label className="text-[10px] uppercase tracking-widest font-bold text-gray-400">Category</label>
@@ -141,6 +213,7 @@ export default function AdminJournalEditor() {
                 <option>Interior</option>
                 <option>Lifestyle</option>
                 <option>Travel</option>
+                <option>Ethics</option>
               </select>
             </div>
 
@@ -156,7 +229,7 @@ export default function AdminJournalEditor() {
           </div>
 
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 space-y-6">
-            <h3 className="font-serif text-lg text-earth-dark border-b border-gray-50 pb-4">Cover Image</h3>
+            <h3 className="font-serif text-lg text-earth-dark border-b border-gray-50 pb-4 italic">Cover Image</h3>
             <label className="relative aspect-video rounded-2xl overflow-hidden bg-gray-100 group cursor-pointer block">
               <img src={formData.image} alt="Cover" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -186,7 +259,7 @@ export default function AdminJournalEditor() {
               <div className="max-w-2xl mx-auto py-16 px-8">
                 <div className="text-center mb-12">
                   <span className="text-[10px] uppercase tracking-[0.4em] text-sand font-bold mb-4 block">{formData.category}</span>
-                  <h1 className="text-4xl md:text-5xl font-serif text-coffee mb-6 leading-tight">{formData.title || 'Untitled Story'}</h1>
+                  <h1 className="text-4xl md:text-5xl font-serif text-coffee mb-6 leading-tight italic">{formData.title || 'Untitled Story'}</h1>
                   <div className="flex items-center justify-center space-x-4 text-[10px] uppercase tracking-widest text-sand">
                     <span>{formData.date}</span>
                     <span className="w-1 h-1 bg-sand rounded-full" />

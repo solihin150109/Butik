@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { PRODUCTS, JOURNAL_POSTS } from '../constants/data';
-import { Package, FileText, AlertTriangle, Eye, ArrowUpRight, ArrowDownRight, Layers, MapPin, BarChart2, PieChart as PieChartIcon, MousePointer2 } from 'lucide-react';
+import { Package, FileText, AlertTriangle, Eye, ArrowUpRight, Layers, MapPin, BarChart2, PieChart as PieChartIcon, MousePointer2, Loader2 } from 'lucide-react';
 import { 
   AreaChart, 
   Area, 
@@ -17,39 +16,191 @@ import {
   Pie
 } from 'recharts';
 
-const visitorData = [
-  { name: 'Mon', visitors: 400 },
-  { name: 'Tue', visitors: 300 },
-  { name: 'Wed', visitors: 600 },
-  { name: 'Thu', visitors: 800 },
-  { name: 'Fri', visitors: 500 },
-  { name: 'Sat', visitors: 900 },
-  { name: 'Sun', visitors: 700 },
-];
+// Types for backend integration
+interface DashboardStats {
+  totalProducts: number;
+  totalJournal: number;
+  totalVisitors: string;
+  categoriesCount: number;
+  statsChanges: {
+    products: string;
+    journal: string;
+    visitors: string;
+    categories: string;
+  };
+}
 
-const categoryData = [
-  { name: 'Rings', value: 40, color: '#5A4634' },
-  { name: 'Necklaces', value: 30, color: '#8B735B' },
-  { name: 'Earrings', value: 20, color: '#C2B280' },
-  { name: 'Bracelets', value: 10, color: '#E5D3B3' },
-];
+interface VisitorDataPoint {
+  name: string;
+  visitors: number;
+}
+
+interface InventoryHealth {
+  jakarta: number;
+  papua: number;
+  lowStockJKT: number;
+  lowStockPAP: number;
+}
+
+interface CategoryMixItem {
+  name: string;
+  count: number;
+  percentage: number;
+}
+
+interface JournalStory {
+  title: string;
+  date: string;
+  image: string;
+}
+
+interface AnalyticsData {
+  trafficSources: { name: string; value: number }[];
+  engagement: {
+    avgSession: string;
+    bounceRate: string;
+    pageViews: string;
+    newVisitors: string;
+  };
+  deviceDistribution: { name: string; value: number; color: string }[];
+  popularPages: { path: string; views: string; trend: string }[];
+}
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'overview' | 'analytics'>('overview');
-  
-  const totalProducts = PRODUCTS.length;
-  const totalJournal = JOURNAL_POSTS.length;
-  const categoriesCount = new Set(PRODUCTS.map(p => p.category)).size;
-  const lowStockJKT = PRODUCTS.filter(p => p.stock.jakarta < 5).length;
-  const lowStockPAP = PRODUCTS.filter(p => p.stock.papua < 5).length;
-  const totalLowStock = lowStockJKT + lowStockPAP;
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // State for dashboard data
+  const [statsData, setStatsData] = useState<DashboardStats | null>(null);
+  const [visitorData, setVisitorData] = useState<VisitorDataPoint[]>([]);
+  const [inventoryHealth, setInventoryHealth] = useState<InventoryHealth | null>(null);
+  const [categoryMix, setCategoryMix] = useState<CategoryMixItem[]>([]);
+  const [recentStories, setRecentStories] = useState<JournalStory[]>([]);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        // Simulated API call - Replace with actual fetch('/api/admin/dashboard')
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Placeholder data structure
+        setStatsData({
+          totalProducts: 42,
+          totalJournal: 12,
+          totalVisitors: '12,842',
+          categoriesCount: 5,
+          statsChanges: {
+            products: '+2',
+            journal: '+1',
+            visitors: '-2.4%',
+            categories: 'Stable'
+          }
+        });
+
+        setVisitorData([
+          { name: 'Mon', visitors: 400 },
+          { name: 'Tue', visitors: 300 },
+          { name: 'Wed', visitors: 600 },
+          { name: 'Thu', visitors: 800 },
+          { name: 'Fri', visitors: 500 },
+          { name: 'Sat', visitors: 900 },
+          { name: 'Sun', visitors: 700 },
+        ]);
+
+        setInventoryHealth({
+          jakarta: 156,
+          papua: 84,
+          lowStockJKT: 3,
+          lowStockPAP: 1
+        });
+
+        setCategoryMix([
+          { name: 'Rings', count: 15, percentage: 35 },
+          { name: 'Necklaces', count: 12, percentage: 28 },
+          { name: 'Earrings', count: 8, percentage: 19 },
+          { name: 'Bracelets', count: 7, percentage: 18 },
+        ]);
+
+        setRecentStories([
+          { title: 'The Art of Stone Carving', date: 'Oct 12, 2023', image: 'https://picsum.photos/seed/stone/100/100' },
+          { title: 'Sustainable Sourcing in Papua', date: 'Oct 08, 2023', image: 'https://picsum.photos/seed/papua/100/100' },
+          { title: 'Minimalist Jewelry Trends', date: 'Oct 05, 2023', image: 'https://picsum.photos/seed/jewelry/100/100' },
+        ]);
+
+        setAnalytics({
+          trafficSources: [
+            { name: 'Direct', value: 450 },
+            { name: 'Social', value: 320 },
+            { name: 'Search', value: 210 },
+            { name: 'Referral', value: 120 },
+          ],
+          engagement: {
+            avgSession: '4m 32s',
+            bounceRate: '24.5%',
+            pageViews: '42.8k',
+            newVisitors: '68%'
+          },
+          deviceDistribution: [
+            { name: 'Mobile', value: 65, color: '#5A4634' },
+            { name: 'Desktop', value: 25, color: '#8B735B' },
+            { name: 'Tablet', value: 10, color: '#C2B280' },
+          ],
+          popularPages: [
+            { path: '/collection', views: '12.4k', trend: '+15%' },
+            { path: '/journal', views: '8.2k', trend: '+8%' },
+            { path: '/about', views: '4.1k', trend: '-2%' },
+            { path: '/contact', views: '2.8k', trend: '+5%' },
+          ]
+        });
+
+      } catch (err) {
+        setError('Failed to load dashboard data. Please try again later.');
+        console.error('Dashboard fetch error:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4">
+        <Loader2 className="w-10 h-10 text-coffee animate-spin" />
+        <p className="text-earth-dark/40 font-serif italic">Preparing your dashboard...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center space-y-4 p-8 text-center">
+        <div className="p-4 bg-red-50 text-red-600 rounded-2xl">
+          <AlertTriangle size={32} />
+        </div>
+        <h2 className="text-xl font-serif text-earth-dark italic">Connection Error</h2>
+        <p className="text-sm text-earth-dark/60 max-w-md">{error}</p>
+        <button 
+          onClick={() => window.location.reload()}
+          className="px-6 py-2 bg-earth-dark text-cream rounded-xl text-sm font-bold hover:bg-coffee transition-colors"
+        >
+          Retry Connection
+        </button>
+      </div>
+    );
+  }
 
   const stats = [
     { 
       name: 'Total Products', 
-      value: totalProducts, 
-      change: '+2', 
+      value: statsData?.totalProducts || 0, 
+      change: statsData?.statsChanges.products || '0', 
       isUp: true, 
       icon: Package, 
       color: 'text-emerald-600', 
@@ -57,8 +208,8 @@ export default function AdminDashboard() {
     },
     { 
       name: 'Journal Stories', 
-      value: totalJournal, 
-      change: '+1', 
+      value: statsData?.totalJournal || 0, 
+      change: statsData?.statsChanges.journal || '0', 
       isUp: true, 
       icon: FileText, 
       color: 'text-blue-600', 
@@ -66,8 +217,8 @@ export default function AdminDashboard() {
     },
     { 
       name: 'Total Visitors', 
-      value: '12,842', 
-      change: '-2.4%', 
+      value: statsData?.totalVisitors || '0', 
+      change: statsData?.statsChanges.visitors || '0%', 
       isUp: false, 
       icon: Eye, 
       color: 'text-amber-600', 
@@ -75,8 +226,8 @@ export default function AdminDashboard() {
     },
     { 
       name: 'Product Categories', 
-      value: categoriesCount, 
-      change: 'Stable', 
+      value: statsData?.categoriesCount || 0, 
+      change: statsData?.statsChanges.categories || 'Stable', 
       isUp: true, 
       icon: Layers, 
       color: 'text-indigo-600', 
@@ -201,31 +352,31 @@ export default function AdminDashboard() {
                       <MapPin size={14} className="text-coffee" />
                       <span className="text-xs font-bold text-earth-dark/60">Jakarta Warehouse</span>
                     </div>
-                    <span className="text-xs font-bold text-earth-dark">{PRODUCTS.reduce((acc, p) => acc + p.stock.jakarta, 0)} units</span>
+                    <span className="text-xs font-bold text-earth-dark">{inventoryHealth?.jakarta || 0} units</span>
                   </div>
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2">
                       <MapPin size={14} className="text-coffee" />
                       <span className="text-xs font-bold text-earth-dark/60">Papua Boutique</span>
                     </div>
-                    <span className="text-xs font-bold text-earth-dark">{PRODUCTS.reduce((acc, p) => acc + p.stock.papua, 0)} units</span>
+                    <span className="text-xs font-bold text-earth-dark">{inventoryHealth?.papua || 0} units</span>
                   </div>
                 </div>
 
                 <div className="pt-6 border-t border-gray-50 space-y-3">
                   <h3 className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/30">Stock Alerts</h3>
-                  {totalLowStock > 0 ? (
+                  {(inventoryHealth?.lowStockJKT || 0) + (inventoryHealth?.lowStockPAP || 0) > 0 ? (
                     <div className="space-y-2">
-                      {lowStockJKT > 0 && (
+                      {(inventoryHealth?.lowStockJKT || 0) > 0 && (
                         <div className="flex items-center gap-3 p-3 bg-red-50 text-red-700 rounded-xl text-xs font-medium">
                           <AlertTriangle size={16} />
-                          <span>{lowStockJKT} items low in Jakarta</span>
+                          <span>{inventoryHealth?.lowStockJKT} items low in Jakarta</span>
                         </div>
                       )}
-                      {lowStockPAP > 0 && (
+                      {(inventoryHealth?.lowStockPAP || 0) > 0 && (
                         <div className="flex items-center gap-3 p-3 bg-amber-50 text-amber-700 rounded-xl text-xs font-medium">
                           <AlertTriangle size={16} />
-                          <span>{lowStockPAP} items low in Papua</span>
+                          <span>{inventoryHealth?.lowStockPAP} items low in Papua</span>
                         </div>
                       )}
                     </div>
@@ -250,24 +401,20 @@ export default function AdminDashboard() {
                 </button>
               </div>
               <div className="space-y-4">
-                {Array.from(new Set(PRODUCTS.map(p => p.category))).map((cat, idx) => {
-                  const count = PRODUCTS.filter(p => p.category === cat).length;
-                  const percentage = Math.round((count / totalProducts) * 100);
-                  return (
-                    <div key={cat} className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold">
-                        <span className="text-earth-dark/60">{cat}</span>
-                        <span className="text-earth-dark">{count} items ({percentage}%)</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-coffee rounded-full" 
-                          style={{ width: `${percentage}%` }}
-                        />
-                      </div>
+                {categoryMix.map((cat) => (
+                  <div key={cat.name} className="space-y-2">
+                    <div className="flex justify-between text-xs font-bold">
+                      <span className="text-earth-dark/60">{cat.name}</span>
+                      <span className="text-earth-dark">{cat.count} items ({cat.percentage}%)</span>
                     </div>
-                  );
-                })}
+                    <div className="w-full h-1.5 bg-gray-50 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-coffee rounded-full" 
+                        style={{ width: `${cat.percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -290,7 +437,7 @@ export default function AdminDashboard() {
                     </div>
                     <div>
                       <p className="text-xs font-bold text-earth-dark">Editorial Reach</p>
-                      <p className="text-[10px] text-earth-dark/40">{totalJournal} published stories</p>
+                      <p className="text-[10px] text-earth-dark/40">{statsData?.totalJournal || 0} published stories</p>
                     </div>
                   </div>
                   <ArrowUpRight size={16} className="text-earth-dark/20" />
@@ -299,7 +446,7 @@ export default function AdminDashboard() {
                 <div className="pt-6 border-t border-gray-50">
                   <h3 className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/30 mb-4">Latest Drafts & Stories</h3>
                   <div className="space-y-4">
-                    {JOURNAL_POSTS.slice(0, 3).map((post, idx) => (
+                    {recentStories.map((post, idx) => (
                       <div key={idx} className="flex items-center gap-3">
                         <div className="w-10 h-10 rounded-lg overflow-hidden flex-shrink-0">
                           <img src={post.image} alt="" className="w-full h-full object-cover" />
@@ -323,12 +470,7 @@ export default function AdminDashboard() {
             <h2 className="text-xl font-serif text-earth-dark italic mb-8">Traffic Sources</h2>
             <div className="h-[300px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={[
-                  { name: 'Direct', value: 450 },
-                  { name: 'Social', value: 320 },
-                  { name: 'Search', value: 210 },
-                  { name: 'Referral', value: 120 },
-                ]}>
+                <BarChart data={analytics?.trafficSources || []}>
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#A3A3A3' }} />
                   <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#A3A3A3' }} />
@@ -346,22 +488,22 @@ export default function AdminDashboard() {
               <div className="p-6 rounded-2xl bg-cream/30 border border-sand/10">
                 <MousePointer2 size={24} className="text-coffee mb-4" />
                 <p className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/40 mb-1">Avg. Session</p>
-                <h4 className="text-2xl font-bold text-earth-dark">4m 32s</h4>
+                <h4 className="text-2xl font-bold text-earth-dark">{analytics?.engagement.avgSession || '0m 0s'}</h4>
               </div>
               <div className="p-6 rounded-2xl bg-cream/30 border border-sand/10">
                 <BarChart2 size={24} className="text-coffee mb-4" />
                 <p className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/40 mb-1">Bounce Rate</p>
-                <h4 className="text-2xl font-bold text-earth-dark">24.5%</h4>
+                <h4 className="text-2xl font-bold text-earth-dark">{analytics?.engagement.bounceRate || '0%'}</h4>
               </div>
               <div className="p-6 rounded-2xl bg-cream/30 border border-sand/10">
                 <Eye size={24} className="text-coffee mb-4" />
                 <p className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/40 mb-1">Page Views</p>
-                <h4 className="text-2xl font-bold text-earth-dark">42.8k</h4>
+                <h4 className="text-2xl font-bold text-earth-dark">{analytics?.engagement.pageViews || '0'}</h4>
               </div>
               <div className="p-6 rounded-2xl bg-cream/30 border border-sand/10">
                 <PieChartIcon size={24} className="text-coffee mb-4" />
                 <p className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/40 mb-1">New Visitors</p>
-                <h4 className="text-2xl font-bold text-earth-dark">68%</h4>
+                <h4 className="text-2xl font-bold text-earth-dark">{analytics?.engagement.newVisitors || '0%'}</h4>
               </div>
             </div>
           </div>
@@ -373,18 +515,14 @@ export default function AdminDashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={[
-                      { name: 'Mobile', value: 65 },
-                      { name: 'Desktop', value: 25 },
-                      { name: 'Tablet', value: 10 },
-                    ]}
+                    data={analytics?.deviceDistribution || []}
                     innerRadius={60}
                     outerRadius={80}
                     paddingAngle={5}
                     dataKey="value"
                   >
-                    {[0, 1, 2].map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={['#5A4634', '#8B735B', '#C2B280'][index]} />
+                    {(analytics?.deviceDistribution || []).map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -392,10 +530,10 @@ export default function AdminDashboard() {
               </ResponsiveContainer>
             </div>
             <div className="flex justify-center gap-6 mt-4">
-              {['Mobile', 'Desktop', 'Tablet'].map((device, i) => (
-                <div key={device} className="flex items-center gap-2">
-                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: ['#5A4634', '#8B735B', '#C2B280'][i] }} />
-                  <span className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/60">{device}</span>
+              {(analytics?.deviceDistribution || []).map((device) => (
+                <div key={device.name} className="flex items-center gap-2">
+                  <div className="w-3 h-3 rounded-full" style={{ backgroundColor: device.color }} />
+                  <span className="text-[10px] uppercase tracking-widest font-bold text-earth-dark/60">{device.name}</span>
                 </div>
               ))}
             </div>
@@ -405,12 +543,7 @@ export default function AdminDashboard() {
           <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100">
             <h2 className="text-xl font-serif text-earth-dark italic mb-8">Most Visited Pages</h2>
             <div className="space-y-4">
-              {[
-                { path: '/collection', views: '12.4k', trend: '+15%' },
-                { path: '/journal', views: '8.2k', trend: '+8%' },
-                { path: '/about', views: '4.1k', trend: '-2%' },
-                { path: '/contact', views: '2.8k', trend: '+5%' },
-              ].map((page) => (
+              {(analytics?.popularPages || []).map((page) => (
                 <div key={page.path} className="flex items-center justify-between p-3 rounded-xl hover:bg-gray-50 transition-colors">
                   <span className="text-xs font-bold text-earth-dark/70">{page.path}</span>
                   <div className="flex items-center gap-4">
